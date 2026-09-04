@@ -340,19 +340,23 @@ transition:transform .35s var(--spring-pop),opacity .4s;border:none}
 const $=id=>document.getElementById(id);
 
 /* ── AUDIO ── */
-/* ── Real song: drop bairan.mp3 in assets/audio/ and it auto-plays.
-      Falls back to Web Audio beeps if file is missing or blocked. ── */
-let bgAudio=null,bgReady=false,bgWanted=false;
+/* ── Real song: assets/audio/bairan.mp3
+      If file loads  → plays the song, beep music disabled entirely.
+      If file errors → silent fail, beep fallback takes over. ── */
+let bgAudio=null,bgFailed=false;
 (function(){
  const a=new Audio();
  a.src="assets/audio/bairan.mp3";
- a.loop=true;a.volume=0.45;a.preload="none";
- a.addEventListener("canplaythrough",()=>{bgReady=true;if(bgWanted)a.play().catch(()=>{});},{ once:true });
- a.addEventListener("error",()=>{bgReady=false;});  // file missing → silent fail, beeps take over
+ a.loop=true;a.volume=0.55;
+ a.preload="auto";  // start loading immediately on page load
+ a.addEventListener("error",()=>{bgFailed=true;});
  bgAudio=a;
 })();
-function startBgAudio(){bgWanted=true;if(bgReady)bgAudio.play().catch(()=>{});}
-function stopBgAudio(){bgWanted=false;if(bgAudio)bgAudio.pause();}
+function startBgAudio(){
+ if(bgFailed)return false;
+ bgAudio.play().catch(()=>{bgFailed=true;_startBeeps();});
+ return true;}
+function stopBgAudio(){if(bgAudio)bgAudio.pause();}
 
 let actx=null;
 function beep(f,d,type,v){d=d||.14;type=type||"sine";v=v||.07;
@@ -369,14 +373,15 @@ const PENTA=[523,587,659,784,880,1047,1175];
 const TREB=[659,0,784,988,659,0,784,1175,988,0,784,659,698,0,880,1047,880,698,659,587,523,0,659,784];
 const BASS=[131,98,110,131,98,110,131,87];
 let mi=0,bi=0,mTimer=null,musicOn=false;
+function _startBeeps(){
+ if(mTimer)return;
+ mTimer=setInterval(()=>{const f=TREB[mi%TREB.length];if(f)beep(f,.22,"sine",.026);
+  if(mi%4===0){const b=BASS[bi%BASS.length];bi++;beep(b,.5,"triangle",.018);}mi++;},240);}
 function startMusic(){
  musicOn=true;$("mus").classList.add("playing");
- /* Try real mp3 first — loads from assets/audio/bairan.mp3 if present */
- startBgAudio();
- /* Beep fallback: only runs if mp3 not ready (file missing or blocked) */
- if(!bgReady){
-  mTimer=setInterval(()=>{const f=TREB[mi%TREB.length];if(f)beep(f,.22,"sine",.026);
-   if(mi%4===0){const b=BASS[bi%BASS.length];bi++;beep(b,.5,"triangle",.018);}mi++;},240);}}
+ /* mp3 first — beeps only fire if mp3 errors (bgFailed=true) */
+ const ok=startBgAudio();
+ if(!ok)_startBeeps();}
 function toggleMusic(){
  if(musicOn){
   musicOn=false;$("mus").classList.remove("playing");
@@ -892,5 +897,5 @@ document.addEventListener("click",e=>{if(!e.target.closest(".seal"))return;
  if($("begin").style.display==="none")return;
  eggT++;if(eggT>=3){toast("🥚","itni curious — Shorya ko pata tha tum yahi karogi. 😂");sparkle();eggT=0;}});
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a35a89db6b795795',t:'MTc4ODQ5OTE1OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a35aadbb293a54c2',t:'MTc4ODUwMDYyNw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
